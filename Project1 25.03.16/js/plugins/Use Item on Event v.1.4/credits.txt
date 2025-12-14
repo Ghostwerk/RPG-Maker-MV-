@@ -1,0 +1,22 @@
+SOUL_MV Chapter Select
+
+Credits:
+
+Programming: Soulpour777
+
+Images:
+
+http://therunefactory.wikia.com/
+http://www.zerochan.net/
+http://www.runefactory4.com/
+
+Other GUI Images:
+
+Soulpour777
+
+
+---
+
+Current Plugin version
+
+2.0

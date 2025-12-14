@@ -1,0 +1,27 @@
+ <quest0>
+  name:Holz Sameln
+  level:1
+  category:Unterstadt
+  difficulty:Easy
+  autoComplete:true/false
+  canAbandon:true/false
+  forceAccept:true/false
+  forceTurnin:true/false
+  qgiverName:Gabi
+  location:Unterstadt ost
+  <description>
+ Some words describing the quest
+ They can be multi-lined!
+ Careful though... no text wrap (yet)
+  <description>
+  <objectives>
+   {name:"An Objective Name", max:#, hidden:true/false}
+   {and more as you need (see below for all objective tags)}
+  <objectives>
+  gold:´0
+  exp:0
+  expScale:#     -modifies exp gained by +/-#% times difference between quest level and player level
+  <rewards>
+  item , id:1, amount:2
+  <rewards>
+ <quest#>

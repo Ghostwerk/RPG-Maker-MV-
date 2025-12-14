@@ -1,0 +1,23 @@
+[
+null,
+{"id":1,"atypeId":2,"description":"","etypeId":6,"traits":[],"iconIndex":141,"name":"Stoff-Schuhe","note":"","params":[0,0,0,5,0,10,0,0],"price":150},
+{"id":2,"atypeId":2,"description":"","etypeId":4,"traits":[],"iconIndex":152,"name":"Stoff-Hemd","note":"","params":[0,0,0,7,0,13,0,0],"price":250},
+{"id":3,"atypeId":2,"description":"","etypeId":3,"traits":[],"iconIndex":130,"name":"Stoff-Helm","note":"","params":[0,5,0,3,0,5,0,0],"price":175},
+{"id":4,"atypeId":1,"description":"","etypeId":3,"traits":[{"code":22,"dataId":1,"value":0}],"iconIndex":131,"name":"Leder-Helm","note":"","params":[5,0,0,4,0,4,0,0],"price":150},
+{"id":5,"atypeId":1,"description":"","etypeId":6,"traits":[{"code":22,"dataId":1,"value":0}],"iconIndex":140,"name":"Leder-Schuhe","note":"","params":[0,0,0,7,0,5,0,0],"price":200},
+{"id":6,"atypeId":1,"description":"","etypeId":4,"traits":[{"code":22,"dataId":1,"value":0}],"iconIndex":152,"name":"Leder-Jacke","note":"","params":[0,0,0,9,0,6,0,0],"price":300},
+{"id":7,"atypeId":3,"description":"","etypeId":2,"traits":[{"code":22,"dataId":1,"value":0}],"iconIndex":129,"name":"Schild","note":"","params":[0,0,0,12,0,0,1,2],"price":340},
+{"id":8,"atypeId":2,"description":"Ring mit bishen magishe kräfte","etypeId":7,"traits":[{"code":22,"dataId":1,"value":0}],"iconIndex":145,"name":"Magisher Ring","note":"<Not Independent Item>\n<Synthesis Ingredients>\nitem 2: 1\narmor 9:1\ngold: 50\n</Synthesis Ingredients>\n","params":[1,15,0,0,5,7,0,0],"price":250},
+{"id":9,"atypeId":3,"description":"","etypeId":7,"traits":[{"code":22,"dataId":1,"value":0}],"iconIndex":145,"name":"Ring","note":"","params":[5,0,0,3,0,0,2,1],"price":50},
+{"id":10,"atypeId":0,"description":"","etypeId":2,"traits":[{"code":22,"dataId":1,"value":0}],"iconIndex":0,"name":"","note":"","params":[0,0,0,0,0,0,0,0],"price":0},
+{"id":11,"atypeId":0,"description":"","etypeId":2,"traits":[{"code":22,"dataId":1,"value":0}],"iconIndex":0,"name":"","note":"","params":[0,0,0,0,0,0,0,0],"price":0},
+{"id":12,"atypeId":0,"description":"","etypeId":2,"traits":[{"code":22,"dataId":1,"value":0}],"iconIndex":0,"name":"","note":"","params":[0,0,0,0,0,0,0,0],"price":0},
+{"id":13,"atypeId":0,"description":"","etypeId":2,"traits":[{"code":22,"dataId":1,"value":0}],"iconIndex":0,"name":"","note":"","params":[0,0,0,0,0,0,0,0],"price":0},
+{"id":14,"atypeId":0,"description":"","etypeId":2,"traits":[{"code":22,"dataId":1,"value":0}],"iconIndex":0,"name":"","note":"","params":[0,0,0,0,0,0,0,0],"price":0},
+{"id":15,"atypeId":0,"description":"","etypeId":2,"traits":[{"code":22,"dataId":1,"value":0}],"iconIndex":0,"name":"","note":"","params":[0,0,0,0,0,0,0,0],"price":0},
+{"id":16,"atypeId":0,"description":"","etypeId":2,"traits":[{"code":22,"dataId":1,"value":0}],"iconIndex":0,"name":"","note":"","params":[0,0,0,0,0,0,0,0],"price":0},
+{"id":17,"atypeId":0,"description":"","etypeId":2,"traits":[{"code":22,"dataId":1,"value":0}],"iconIndex":0,"name":"","note":"","params":[0,0,0,0,0,0,0,0],"price":0},
+{"id":18,"atypeId":0,"description":"","etypeId":2,"traits":[{"code":22,"dataId":1,"value":0}],"iconIndex":0,"name":"","note":"","params":[0,0,0,0,0,0,0,0],"price":0},
+{"id":19,"atypeId":0,"description":"","etypeId":2,"traits":[{"code":22,"dataId":1,"value":0}],"iconIndex":0,"name":"","note":"","params":[0,0,0,0,0,0,0,0],"price":0},
+{"id":20,"atypeId":0,"description":"","etypeId":2,"traits":[{"code":22,"dataId":1,"value":0}],"iconIndex":0,"name":"","note":"","params":[0,0,0,0,0,0,0,0],"price":0}
+]
