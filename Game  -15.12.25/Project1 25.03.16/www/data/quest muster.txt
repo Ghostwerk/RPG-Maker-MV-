@@ -1,0 +1,28 @@
+ <quest#>
+  name:Quest Name
+  level:#
+  category:categoryName
+  difficulty:Some Words (Easy, Normal, whatever you want)
+  autoComplete:true/false
+  canAbandon:true/false
+  forceAccept:true/false
+  forceTurnin:true/false
+  qgiverName:Random name
+  location:Random words
+  <description>
+ Some words describing the quest
+ They can be multi-lined!
+ Careful though... no text wrap (yet)
+  <description>
+  <objectives>
+   {name:"An Objective Name", max:#, hidden:true/false}
+   {and more as you need (see below for all objective tags)}
+  <objectives>
+  gold:#
+  exp:#
+  expScale:#     -modifies exp gained by +/-#% times difference between quest level and player level
+  <rewards>
+   {type:"item" (or "weapon" or "armor"), id:#, amount:#}
+   {and more as needed}
+  <rewards>
+ <quest#>
