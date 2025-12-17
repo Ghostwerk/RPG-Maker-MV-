@@ -1,0 +1,12 @@
+{
+    "name": "Tiled_RMMV_Ver1.6.1",
+    "main": "index.html",
+    "js-flags": "--expose-gc",
+    "window": {
+        "title": "",
+        "toolbar": false,
+        "width": 640,
+        "height": 480,
+        "icon": "icon/icon.png"
+    }
+}

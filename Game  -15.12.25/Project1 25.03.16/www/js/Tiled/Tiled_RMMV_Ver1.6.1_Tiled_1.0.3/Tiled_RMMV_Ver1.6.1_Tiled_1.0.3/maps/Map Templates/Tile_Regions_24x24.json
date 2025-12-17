@@ -1,0 +1,12 @@
+{ "columns":8,
+ "image":"..\/img\/tilesets\/Tile_Region_24x24.png",
+ "imageheight":384,
+ "imagewidth":192,
+ "margin":0,
+ "name":"Tile_Regions_24x24",
+ "spacing":0,
+ "tilecount":128,
+ "tileheight":24,
+ "tilewidth":24,
+ "type":"tileset"
+}
