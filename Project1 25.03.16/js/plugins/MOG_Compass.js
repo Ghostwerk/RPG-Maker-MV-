@@ -3,8 +3,12 @@
 //=============================================================================
 
 /*:
- * @plugindesc (v1.2) Adiciona uma bússola indicando o destino a ser seguido.
+ * @plugindesc (v1.7) Adiciona uma bússola indicando o destino a ser seguido.
  * @author Moghunter
+ *
+ * @param Smart Fade
+ * @desc Ativa transparência na hud quando a hud estiver acima do personagem.
+ * @default true
  *
  * @param Compass X-Axis
  * @desc Definição da posição X-axis do compasso.
@@ -52,9 +56,9 @@
  *
  * @help  
  * =============================================================================
- * +++ MOG - Compass (v1.2) +++
+ * +++ MOG - Compass (v1.7) +++
  * By Moghunter 
- * https://atelierrgss.wordpress.com/
+ * https://mogplugins.com
  * =============================================================================
  * Adiciona uma bússola indicando o destino a ser seguido.
  * É necessário ter as seguintes imagens gravadas na pasta /img/system/
@@ -86,10 +90,8 @@
  * =============================================================================
  * HISTÓRICO
  * =============================================================================
- * v1.2 - Correção do efeito blinking da bussola durante os dialogos.
- * v1.1 - Correção do crash ao apagar (Erase) o evento do mapa.
- *      - Correção do efeito smart Fade.
- *      - Correção de não desligar o destino após ativar uma página em branco.
+ * v1.7 - Corrigido o bug de não ocultar a Hud durante a mensagem. 
+ *      - Melhoria de performance. 
  *  
  */
 
@@ -112,8 +114,9 @@
 	Moghunter.compass_steps_visible = String(Moghunter.parameters['Steps Visible'] || "true");
 	Moghunter.compass_steps_x = Number(Moghunter.parameters['Steps X-Axis'] || 80);
     Moghunter.compass_steps_y = Number(Moghunter.parameters['Steps Y-Axis'] || 70);
+    Moghunter.compass_smartFade = String(Moghunter.parameters['Smart Fade'] || "true");	
 	
-	//=============================================================================
+//=============================================================================
 // ** Game System
 //=============================================================================
 
@@ -124,7 +127,8 @@ var _alias_mog_compass_gsys_initialize = Game_System.prototype.initialize;
 Game_System.prototype.initialize = function() {
 	_alias_mog_compass_gsys_initialize.call(this);
 	this._compass_event_id = 0;
-	this._compass_visible = true
+	this._compass_visible = true;
+	this._compass_ahud_smartFade = String(Moghunter.compass_smartFade) === "true" ? true : false;
 };
 
 //=============================================================================
@@ -212,30 +216,104 @@ Game_CharacterBase.prototype.screen_realY = function() {
 };
 
 //=============================================================================
-// ** Spriteset_Map
+// ** Scene Base
 //=============================================================================
 
 //==============================
-// * Create Upper Layer
+// ** create Hud Field
 //==============================
-var _alias_mog_compass_sptrbase_createUpperLayer = Spriteset_Map.prototype.createUpperLayer;
-Spriteset_Map.prototype.createUpperLayer = function() {
-	_alias_mog_compass_sptrbase_createUpperLayer.call(this)
-	this.create_sprite_compass();
+Scene_Base.prototype.createHudField = function() {
+	this._hudField = new Sprite();
+	this._hudField.z = 10;
+	this.addChild(this._hudField);
 };
 
 //==============================
-// * Create Sprite Compass
-//==============================	
-Spriteset_Map.prototype.create_sprite_compass = function() {
-	$gameSystem._compass_event_id = 0;
+// ** sort MZ
+//==============================
+Scene_Base.prototype.sortMz = function() {
+   this._hudField.children.sort(function(a, b){return a.mz-b.mz});
+};
+
+//=============================================================================
+// ** Scene Map
+//=============================================================================
+
+//==============================
+// ** create Spriteset
+//==============================
+var _mog_compass_sMap_createSpriteset = Scene_Map.prototype.createSpriteset;
+Scene_Map.prototype.createSpriteset = function() {
+	_mog_compass_sMap_createSpriteset.call(this);
+	if (!this._hudField) {this.createHudField()};
+	this.createCompass();
+	this.sortMz();
+};
+
+//==============================
+// ** create Compass
+//==============================
+Scene_Map.prototype.createCompass = function() {
+    this._compassHud = new CompassHud();
+	this._compassHud.mz = 120;
+	this._hudField.addChild(this._compassHud);
+};
+
+//=============================================================================
+// * Hit Counter Sprites
+//=============================================================================
+function CompassHud() {
+    this.initialize.apply(this, arguments);
+};
+
+CompassHud.prototype = Object.create(Sprite.prototype);
+CompassHud.prototype.constructor = CompassHud;
+
+//==============================
+// * Initialize
+//==============================
+CompassHud.prototype.initialize = function() {
+    Sprite.prototype.initialize.call(this);	
+    this.setup();
+	this.createSprites()
+};
+
+//==============================
+// * Setup
+//==============================
+CompassHud.prototype.setup = function() {
+ 	$gameSystem._compass_event_id = 0;
 	this._sprite_compass_ref = 10;
-	this._sprite_compass_size = [-1,-1,-1,-1];
+	this._sprite_compass_size = [-1,-1,-1,-1];   
+	this._stepNumber = [-1,0];
+};
+
+//==============================
+// * create Sprites
+//==============================
+CompassHud.prototype.createSprites = function() {
+    this.createLayout();
+	this.createPointer();
+	this.createDestinationName();
+	this.createStepCounter();
+	this.check_destination_events();
+};
+
+//==============================
+// * create Layout
+//==============================
+CompassHud.prototype.createLayout = function() {
     this._sprite_compass_layout = new Sprite(ImageManager.loadSystem("Compass_A"));
 	this._sprite_compass_layout.x = Moghunter.compass_x;
 	this._sprite_compass_layout.y = Moghunter.compass_y;
 	this._sprite_compass_layout.opacity = 0;
-	this.addChild(this._sprite_compass_layout);	
+	this.addChild(this._sprite_compass_layout);  
+};
+
+//==============================
+// * create Pointer
+//==============================
+CompassHud.prototype.createPointer = function() {
     this._sprite_compass = new Sprite(ImageManager.loadSystem("Compass_B"));
 	this._sprite_compass.anchor.x = 0.5;
 	this._sprite_compass.anchor.y = 0.5;
@@ -243,14 +321,27 @@ Spriteset_Map.prototype.create_sprite_compass = function() {
 	this._sprite_compass.y = Moghunter.compass_y + Moghunter.compass_arrow_y;
 	this._sprite_compass.opacity = 0;
 	this.addChild(this._sprite_compass);
+};
+
+//==============================
+// * create Destination Name
+//==============================
+CompassHud.prototype.createDestinationName = function() {
 	this._sprite_compass_name = new Sprite(new Bitmap(120,32));
 	this._sprite_compass_name.x = Moghunter.compass_x + Moghunter.compass_name_x + 60;
 	this._sprite_compass_name.y = Moghunter.compass_y + Moghunter.compass_name_y + 16; 
 	this._sprite_compass_name.anchor.x = 0.5;
 	this._sprite_compass_name.anchor.y = 0.5;
 	this._sprite_compass_name.bitmap.fontSize = Number(Moghunter.compass_font_size);
-	this._sprite_compass_name.opacity = 0;	
+	this._sprite_compass_name.opacity = 0;		
 	if (String(Moghunter.compass_name_visible) === "true") {this.addChild(this._sprite_compass_name)};
+};
+
+
+//==============================
+// * create Step Counter
+//==============================
+CompassHud.prototype.createStepCounter = function() {
 	this._sprite_compass_number = [];
 	this._cpd_steps = [0,0];
 	for (var i = 0; i < 4; i++) {
@@ -258,15 +349,17 @@ Spriteset_Map.prototype.create_sprite_compass = function() {
 		this._sprite_compass_number[i].x = Moghunter.compass_x + Moghunter.compass_steps_x;
 		this._sprite_compass_number[i].y = Moghunter.compass_y + Moghunter.compass_steps_y;
 		this._sprite_compass_number[i].visible = false;
-		if (String(Moghunter.compass_steps_visible) === "true") {this.addChild(this._sprite_compass_number[i])};
-	};
-	this.check_destination_events();
+		if (String(Moghunter.compass_steps_visible) === "true") {
+			this.addChild(this._sprite_compass_number[i])
+		};
+	}; 
 };
 
 //==============================
 // * Refresh Steps Number
 //==============================	
-Spriteset_Map.prototype.refresh_steps_number = function(value) {
+CompassHud.prototype.refresh_steps_number = function(value) {
+	this._stepNumber[0] = value;	
 	if (this._cpd_steps[0] === 0) {return;};
 	if (value > 9999) {value = 9999};
 	numbers = Math.abs(value).toString().split("");  
@@ -284,7 +377,7 @@ Spriteset_Map.prototype.refresh_steps_number = function(value) {
 //==============================
 // * Check Destination Events
 //==============================	
-Spriteset_Map.prototype.check_destination_events = function() {
+CompassHud.prototype.check_destination_events = function() {
 	$gameMap.events().forEach(function(event) {
 		if (!event._erased && event.page()) {
 		event.list().forEach(function(l) {
@@ -311,7 +404,7 @@ Spriteset_Map.prototype.check_destination_events = function() {
 //==============================
 // * Refresh Compass
 //==============================
-Spriteset_Map.prototype.refresh_compass = function() {
+CompassHud.prototype.refresh_compass = function() {
 	this._compass_event_id = $gameSystem._compass_event_id;
 	this._sprite_compass.opacity = 0;
     this._sprite_compass_layout.opacity = 0;
@@ -328,46 +421,44 @@ Spriteset_Map.prototype.refresh_compass = function() {
 };
 
 //==============================
-// * Update
+// * Update Combo Sprites
 //==============================
-var _alias_mog_compass_update = Spriteset_Map.prototype.update;
-Spriteset_Map.prototype.update = function() {
-	_alias_mog_compass_update.call(this);
-	if (this._sprite_compass) {this.update_compass()};
-};
-		
-//==============================
-// * Update Compass
-//==============================
-Spriteset_Map.prototype.update_compass = function() {
-	if (this._compass_event_id != $gameSystem._compass_event_id) {this.refresh_compass()};
+CompassHud.prototype.update = function() {	
+   Sprite.prototype.update.call(this);	
+	if (this._compass_event_id != $gameSystem._compass_event_id) {this.refresh_compass()};  
     this._sprite_compass_layout.opacity = this._sprite_compass.opacity;
-    this._sprite_compass_name.opacity = this._sprite_compass.opacity;
+    this._sprite_compass_name.opacity = this._sprite_compass.opacity;	
 	for (var i = 0; i < this._sprite_compass_number.length; i++) {
 	     this._sprite_compass_number[i].opacity = this._sprite_compass.opacity;
 	};	
-	if (this._sprite_compass_size[0] == -1 && this._sprite_compass_layout.bitmap.isReady()) {this.set_compass_data()};
-	if (!this.compass_visible()) {this._sprite_compass.opacity -= 5;return;}
-	else {
-         if (this.need_fade_sprite_compass()) {this._sprite_compass.opacity -= 5;}
-		 else {this._sprite_compass.opacity += 5;};
-	};	 
+	if (this._sprite_compass_size[0] == -1 && this._sprite_compass_layout.bitmap.isReady()) {
+		this.set_compass_data()
+	};	
+	if (!this.compass_visible()) {
+		this._sprite_compass.opacity -= 10
+		return;
+	} else {
+         if (this.need_fade_sprite_compass()) {
+			if ($gameMessage.isBusy()) {
+		        this.opacity -= 10;
+		    } else {		 
+				if (this._sprite_compass.opacity > 90) {	
+					this._sprite_compass.opacity -= 10;
+					if (this._sprite_compass.opacity < 90) {this._sprite_compass.opacity = 90};
+				};
+		    };
+	     } else {
+			 this._sprite_compass.opacity += 10
+		 };
+	};	
 	this._sprite_compass_ref += 1;
-    if (this._sprite_compass_ref > 4) {this.update_compass_direction();};
-};
-
-//==============================
-// * Need Visible
-//==============================
-Spriteset_Map.prototype.compass_need_visible = function() {
-	//if ($gameMessage.isBusy()) {return false}
-	return true;
+    if (this._sprite_compass_ref > 4) {this.update_compass_direction();};   
 };
 
 //==============================
 // * Update Compass Direction
 //==============================
-Spriteset_Map.prototype.update_compass_direction = function() {
+CompassHud.prototype.update_compass_direction = function() {
 	this._sprite_compass_ref = 0;
 	var dx = $gameMap.compass_destination().screenX();
 	var dy = $gameMap.compass_destination().screenYC();
@@ -378,13 +469,15 @@ Spriteset_Map.prototype.update_compass_direction = function() {
 	this._sprite_compass.rotation = -angle;
 	var dist = (Math.abs(axy[0]) + Math.abs(axy[1]));
 	var dist_2 = Math.floor(dist / 48);
-	this.refresh_steps_number(dist_2);
+	if (this._stepNumber[0] != dist_2) {
+	    this.refresh_steps_number(dist_2);
+    };	
 };
 
 //==============================
 // * Set Compass Data
 //==============================
-Spriteset_Map.prototype.set_compass_data = function() {
+CompassHud.prototype.set_compass_data = function() {
   this._sprite_compass_size[0] = Moghunter.compass_x - ($gameMap.tileWidth() / 2);
   this._sprite_compass_size[1] = Moghunter.compass_y - $gameMap.tileHeight();
   this._sprite_compass_size[2] = Moghunter.compass_x + this._sprite_compass_layout.bitmap.width - $gameMap.tileWidth();
@@ -396,7 +489,8 @@ Spriteset_Map.prototype.set_compass_data = function() {
 //==============================
 // * Need Fade Sprite Compass
 //==============================
-Spriteset_Map.prototype.need_fade_sprite_compass = function() {
+CompassHud.prototype.need_fade_sprite_compass = function() {
+	if (!$gameSystem._compass_ahud_smartFade) {return false};
 	if ($gamePlayer.screen_realX() < this._sprite_compass_size[0]) {return false};
 	if ($gamePlayer.screen_realX() > this._sprite_compass_size[2]) {return false};
 	if ($gamePlayer.screen_realY() < this._sprite_compass_size[1]) {return false};
@@ -408,10 +502,11 @@ Spriteset_Map.prototype.need_fade_sprite_compass = function() {
 //==============================
 // * Compass Visible
 //==============================
-Spriteset_Map.prototype.compass_visible = function() {
+CompassHud.prototype.compass_visible = function() {
 	if (!$gameMap.compass_destination()) {return false};
 	if ($gameMap.compass_destination()._erased) {return false};	
 	if (!$gameSystem._compass_visible) {return false};
 	if (SceneManager.isSceneChanging()) {return false};
+	if ($gameMessage.isBusy()) {return false};
 	return true;
 };

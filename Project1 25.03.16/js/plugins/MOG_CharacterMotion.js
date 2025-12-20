@@ -3,14 +3,14 @@
 //=============================================================================
 
 /*:
- * @plugindesc (v1.0) Sistema de animações dos sprites dos personagens.
+ * @plugindesc (v1.3) Sistema de animações dos sprites dos personagens.
  * @author Moghunter
  + 
  * @help  
  * =============================================================================
- * +++ MOG - Character Motion (v1.0) +++
+ * +++ MOG - Character Motion (v1.3) +++
  * By Moghunter 
- * https://atelierrgss.wordpress.com/
+ * https://mogplugins.com
  * =============================================================================
  * Sistema de animações dos sprites dos personagens.
  * =============================================================================
@@ -18,13 +18,13 @@
  * =============================================================================
  * Para ativar os efeitos nos eventos, basta usar esse comentários.
  *
- * Breath Mode: X          *(1..3)
+ * Breath Mode : X          *(1..3)
  *  
  * Float Mode
  *
  * Swing Mode
  *
- * Ghost Mode: X           *(1..2)
+ * Ghost Mode : X           *(1..2)
  *
  * =============================================================================
  * COMMANDOS DE PLUGIN
@@ -66,6 +66,14 @@
  *
  * ghost_mode_follower_id : 0 : 1
  * zoom_follower_id : 1 : 2.5
+ *
+ * =============================================================================
+ * HISTÓRICO
+ * =============================================================================
+ * (v1.3) - Novas funções para o Chrono Engine.
+ * (v1.2) - Compatibilidade com o Chrono Engine. 
+ * (v1.1) - Mudança da notetag para padronizar a forma de comandos.
+ * 
  */
 
 //=============================================================================
@@ -94,6 +102,13 @@ Game_CharacterBase.prototype.initMembers = function() {
 // * spCharSetup
 //==============================
 Game_CharacterBase.prototype.charEffectsClear = function() {
+	this._charEffectChecked = false;
+	this._actionZoomData = {};
+	this._actionZoomData.enabled = false;
+	this._actionZoomData.loop = true;
+	this._actionZoomData.returnBack = false;
+	this._actionZoomData.mode = 0;
+	this._actionZoomData.zoom = 0;
 	this._zoomData = [1.00,1.00,1.00,1.00];
 	this._rotationData = [0,0];
 	this._swingData = [0,0,0,0,0,0,false];
@@ -102,6 +117,17 @@ Game_CharacterBase.prototype.charEffectsClear = function() {
 	this._ghostData = [0,0,0,0,0,0,false];
 	this._shakeData = [0,0,0,0,0,0,false];
 	this._collapseData = [0,0,0,0,0,0,false];
+};
+
+//==============================
+// * char Zoom Act
+//==============================
+Game_CharacterBase.prototype.charZoomAct = function(enable,loop) {
+	if (!this._actionZoomData.enabled) {
+		this._actionZoomData.enabled = true
+	};
+	var loop = loop != null ? loop : enable;
+	this._actionZoomData.loop = loop;
 };
 
 //==============================
@@ -163,8 +189,16 @@ Game_CharacterBase.prototype.isFlying = function() {
 // * is Breathing
 //==============================
 Game_CharacterBase.prototype.isBreathing = function() {
+	if (this._actionZoomData.enabled) {return false};
 	return this._breathData[0] > 0;
 };
+
+//==============================
+// * is Breath Act
+//==============================
+Game_CharacterBase.prototype.isBreathAct = function() {
+	return this._actionZoomData.enabled;
+}; 
 
 //==============================
 // * is Ghost Mode
@@ -205,21 +239,25 @@ Game_CharacterBase.prototype.motionY = function() {
 // * motionR
 //==============================
 Game_CharacterBase.prototype.motionR = function() {
-	return this._rotationData[0] + this._swingData[1];
+	var n = this._rotationData[0] + this._swingData[1]
+	if (Imported.MOG_ChronoEngine) {
+	    n += this._user.rotation[0];
+	};
+	return n;
 };
 
 //==============================
 // * motion ZX
 //==============================
 Game_CharacterBase.prototype.motionZX = function() {
-	return this._zoomData[0] + this._breathData[1] + this._collapseData[1];
+	return this._zoomData[0] + this._breathData[1] + this._collapseData[1] + this._actionZoomData.zoom;
 };
 
 //==============================
 // * motion ZY
 //==============================
 Game_CharacterBase.prototype.motionZY = function() {
-	return this._zoomData[1] + this._breathData[2] + this._collapseData[2];
+	return this._zoomData[1] + this._breathData[2] + this._collapseData[2] + this._actionZoomData.zoom;
 };
 
 //==============================
@@ -239,7 +277,8 @@ Game_CharacterBase.prototype.motionOP = function() {
 var _alias_mog_charmotion_gevent_setupPage = Game_Event.prototype.setupPage;
 Game_Event.prototype.setupPage = function() {
 	_alias_mog_charmotion_gevent_setupPage.call(this);
-    this.checkCharMotion();
+	this._actionZoomData.loop = false;
+    if (!this._charEffectChecked) {this.checkCharMotion()};
 };
 
 //==============================
@@ -251,16 +290,20 @@ Game_Event.prototype.checkCharMotion = function() {
 	       if (l.code === 108) {
 			   if (l.parameters[0].toLowerCase() == "float mode"){
                   this._floatData[0] = 1;
+				  this._charEffectChecked = true;
 			   };
 			   if (l.parameters[0].toLowerCase() == "swing mode"){
                   this._swingData[0] = 1;
+				  this._charEffectChecked = true;
 			   };			   
-			   var comment = l.parameters[0].split(': ')
+			   var comment = l.parameters[0].split(' : ')
 			   if (comment[0].toLowerCase() == "breath mode"){
                   this._breathData[0] = Number(comment[1]);
+				  this._charEffectChecked = true;
 			   };
-			   if (comment[0].toLowerCase() == "ghost mode"){
+			   if (comment[0].toLowerCase() == "ghost mode"){				   
                   this._ghostData[0] = Number(comment[1]);
+				  this._charEffectChecked = true;
 			   };				   		   	  
 			};
 	}, this);};
@@ -388,12 +431,18 @@ Sprite_Character.prototype.update = function() {
 //==============================
 // * Update Spr Effect
 //==============================
-Sprite_Character.prototype.updateSprEffect = function() {    
+Sprite_Character.prototype.updateSprEffect = function() {   
+    if (Imported.MOG_ChronoEngine && this._character._user.treasure[0]) {
+        return
+	};
 	if (this._character.isCollapsing()) {this.updateCollapseEffect()
 	} else {
 	   if (this._character.isSwing()) {this.updateSwingEffect()};
 	   if (this._character.isFlying()) {this.updateFloatEffect()};
-	   if (this._character.isBreathing()) {this.updateBreathEffect()};
+	   if (this._character.isBreathAct()) {
+		   this.updateBreathActEffect();
+	   } else if (this._character.isBreathing()) {
+		   this.updateBreathEffect()};
 	   if (this._character.isShaking()) {this.updateShakeEffect()};
 	   if (this._character.isGhostMode()) {this.updateGhostEffect()};
 	};
@@ -596,13 +645,40 @@ Sprite_Character.prototype.updateBreathEffect3 = function() {
 };
 
 //==============================
+// * Update Breath Act Effect
+//==============================
+Sprite_Character.prototype.updateBreathActEffect = function() {
+	if (Imported.MOG_ChronoEngine && this._character.isKnockbacking()) {return};
+	if (this._character._actionZoomData.mode === 0) {
+		this._character._actionZoomData.zoom += 0.01;
+		if (this._character._actionZoomData.zoom > 0.20) {
+			this._character._actionZoomData.zoom = 0.20;
+			this._character._actionZoomData.mode = 1;
+		};
+	} else {
+		this._character._actionZoomData.zoom -= 0.01;
+		if (this._character._actionZoomData.zoom < 0) {
+			this._character._actionZoomData.zoom = 0;
+			this._character._actionZoomData.mode = 0;
+			if (!this._character._actionZoomData.loop) {
+				this._character._actionZoomData.enabled = false;
+				this._character._actionZoomData.returnBack = false;
+			};
+		};
+	};
+	if (this._character._actionZoomData.returnBack) {
+		this._character._actionZoomData.loop = false; 
+	};	
+};
+
+//==============================
 // * Update Shake Effect
 //==============================
 Sprite_Character.prototype.updateShakeEffect = function() {
 	if (this._character._shakeData[0] > 0) {this._character._shakeData[0] -= 1};
-    this._character._shakeData[1] = Math.randomInt(10)
+    this._character._shakeData[1] = Math.randomInt(5)
 	if (this._character._shakeData[0] === 0) {this._character._shakeData[1] = 0};
-	this.x -= 5;
+	this.x -= 2;
 };
 
 //==============================

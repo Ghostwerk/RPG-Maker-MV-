@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc (v1.2) Minigame baseado no jogo Final Fantasy Theatrhythm.
+ * @plugindesc (v1.6) Minigame baseado no jogo Final Fantasy Theatrhythm.
  * @author Moghunter
  *
  * @param >> MAIN ===================
@@ -220,9 +220,9 @@
  *
  * @help  
  * =============================================================================
- * +++ MOG - Theatrhythm (v1.2) +++
+ * +++ MOG - Theatrhythm (v1.6) +++
  * By Moghunter 
- * https://atelierrgss.wordpress.com/
+ * https://mogplugins.com
  * =============================================================================
  * Minigame baseado no jogo Final Fantasy Theatrhythm.
  * Os pontos ganhos ao final do mini game serão gravados em uma variável onde
@@ -248,12 +248,10 @@
  * Theatrhythm Action Animation: X
  *
  * =============================================================================
- * HITSTÓRICO
+ * - WHAT'S  NEW (version 1.6) 
  * =============================================================================
- * (v1.2) - Correção do Crash relativo as Tags.
- * (v1.1) - Correção de prosseguir os comandos de eventos antes da cena do
- *          Theatrhythm terminar.
- *        - Adicionado a switch de resultado do minigame. 
+ * (Bug Fix) - Correção do bug de posição dos battlers com o plugin MOG_BattleHUD 
+ *           - Correção do bug de aprentar os Inimigos do Front View mode.
  *
  */
 
@@ -273,7 +271,7 @@
 	Moghunter.theatrhythm_miss_dmg_per = Number(Moghunter.parameters['Miss Dmg Percentage'] || 0);
 	Moghunter.theatrhythm_bp_base_value = Number(Moghunter.parameters['BP Base Value'] || 50);
 	Moghunter.theatrhythm_enemy_atk_ani = Number(Moghunter.parameters['Enemy Atk Animation'] || 1);  
-    Moghunter.theatrhythm_actor_x = Number(Moghunter.parameters['Actor X-Axis'] || 700);
+    Moghunter.theatrhythm_actor_x =  Number(Moghunter.parameters['Actor X-Axis'] || 700);
 	Moghunter.theatrhythm_actor_y = Number(Moghunter.parameters['Actor Y-Axis'] || 320);
 	Moghunter.theatrhythm_actor_spc_y = Number(Moghunter.parameters['Actor Space Y'] || 80);			
 	Moghunter.theatrhythm_enemy_x = Number(Moghunter.parameters['Enemy X-Axis'] || 180);
@@ -386,7 +384,7 @@ Game_System.prototype.initialize = function() {
 	this._theatrhythm_miss_dmg = false;
 	this._theatrhythm_key_data = [null,0,0,0];
 	this._theatrhythm_chain_data = [0,0];
-	this._theatrhythm_score_data = [0,0];		
+	this._theatrhythm_score_data = [0,0];
 	Input.keyMapper[65] = 'a';
     Input.keyMapper[83] = 's';
 };
@@ -486,15 +484,13 @@ Sprite_Battler.prototype.updatePosition = function() {
 //==============================
 // * Update Position
 //==============================
-Sprite_Battler.prototype.update_theatrhythm = function() {		
-	if (!Imported.MOG_BattlerMotion) {
-		if (this._battler) {
-			if (this._battler._motion_damage_duration > 0) {this.update_motion_damage()};
-			if (this._battler._motion_action_data[0] === 7) {this.update_action_move_right();}; 
-			this.x += this._battler._motion_action_xy[0];
-			this.y += this._battler._motion_action_xy[1];
-	    };
-	};
+Sprite_Battler.prototype.update_theatrhythm = function() {	
+	if (this._battler) {
+	    if (this._battler._motion_damage_duration > 0) {this.update_motion_damage()};
+		if (this._battler._motion_action_data[0] === 7) {this.update_action_move_right();}; 
+		this.x += this._battler._motion_action_xy[0];
+		this.y += this._battler._motion_action_xy[1];
+	};	
 	if (this._battler.isEnemy() && $gameSystem._theatrhythm_phase === 10) {this.opacity -= 5}
 };
 
@@ -502,6 +498,7 @@ Sprite_Battler.prototype.update_theatrhythm = function() {
 // * Update Motion Damage
 //==============================
 Sprite_Battler.prototype.update_motion_damage = function() {
+	 if (Imported.MOG_FlashDamage && this._battler._flashDamage) {return};
 	 this._battler._motion_damage_xy[0] = (Math.random() * 12) - 6;
 	 this._battler._motion_damage_duration -= 1;
 	 if (this._battler._motion_damage_duration <= 0) {this._battler._motion_damage_xy = [0,0]};
@@ -1147,7 +1144,7 @@ Scene_Theatrhythm.prototype.getSpriteData = function() {
 //==============================
 Scene_Theatrhythm.prototype.createScenario = function() {
     this._back1Sprite = new TilingSprite();
-	this._back1Sprite.move(0, 0, Graphics.width, Graphics.height);
+	this._back1Sprite.move(0, 0, Graphics.boxWidth, Graphics.boxHeight);
 	this._back1Sprite.anchor.x = 0.5;
 	this._back1Sprite.anchor.y = 0.5;
 	this._spriteField.addChild(this._back1Sprite);	
@@ -1155,7 +1152,7 @@ Scene_Theatrhythm.prototype.createScenario = function() {
 	this._back2Sprite.anchor.x = 0.5;
 	this._back2Sprite.anchor.y = 0.5;	
 	this._spriteField.addChild(this._back2Sprite);
-    this._back2Sprite.move(0, 0, Graphics.width, Graphics.height);
+    this._back2Sprite.move(0, 0, Graphics.boxWidth, Graphics.boxHeight);
 	this.refresh_background();
 };
 
@@ -1165,10 +1162,14 @@ Scene_Theatrhythm.prototype.createScenario = function() {
 Scene_Theatrhythm.prototype.refresh_background = function() {
 	this._back1Sprite.bitmap = ImageManager.loadBattleback1($gameMap.battleback1Name());
 	this._back2Sprite.bitmap = ImageManager.loadBattleback2($gameMap.battleback2Name());
-	this._back1Sprite.x = Graphics.width / 2;
-	this._back1Sprite.y = Graphics.height / 2;
-	this._back2Sprite.x = Graphics.width / 2;
-	this._back2Sprite.y = Graphics.height / 2;
+	this._back1Sprite.x = Graphics.boxWidth / 2;
+	this._back1Sprite.y = Graphics.boxHeight / 2;
+	this._back1Sprite.origin.x = Graphics.boxWidth / 2;
+	this._back1Sprite.origin.y = Graphics.boxHeight / 2;
+	this._back2Sprite.x = Graphics.boxWidth / 2;
+	this._back2Sprite.y = Graphics.boxHeight / 2;	
+	this._back2Sprite.origin.x = Graphics.boxWidth / 2;
+	this._back2Sprite.origin.y = Graphics.boxHeight / 2;	
 };
 
 //==============================
@@ -1187,16 +1188,9 @@ Scene_Theatrhythm.prototype.createActors = function() {
 // * Create Enemy
 //==============================
 Scene_Theatrhythm.prototype.createEnemy = function() {
-	if (Imported.MOG_BattlerMotion) {
-    	this._sprite_shadow = new SpriteBattlerShadow();	
-	    this._spriteField.addChild(this._sprite_shadow);
-	};
     this._enemy = new Game_Enemy($gameSystem._theatrhythm_data[0],Moghunter.theatrhythm_enemy_x, Moghunter.theatrhythm_enemy_y);		
     this._enemySprite = new Sprite_Enemy(this._enemy);
 	this._spriteField.addChild(this._enemySprite);
-	if (Imported.MOG_BattlerMotion) {    	
-	    this._enemySprite.add_shadow(this._sprite_shadow);
-	};
 };
 	
 //==============================
@@ -1204,7 +1198,7 @@ Scene_Theatrhythm.prototype.createEnemy = function() {
 //==============================
 Scene_Theatrhythm.prototype.updateActors = function() {
     for (var i = 0; i < this._actorSprites.length; i++) {		
-        this._actorSprites[i].setBattler(this._battlers[i]);			
+        this._actorSprites[i].setBattler(this._battlers[i]);
     };
 };
 
@@ -1771,8 +1765,25 @@ Sprite_TKeys.prototype.need_reset_key = function(i) {
 };
 
 //=============================================================================
+// ** Sprite Enemy
+//=============================================================================	
+
+//==============================
+// * Load Bitmap
+//==============================
+var _alias_mog_Theatrhythm_loadBitmap = Sprite_Enemy.prototype.loadBitmap;
+Sprite_Enemy.prototype.loadBitmap = function(name, hue) {
+	if ($gameSystem._theatrhythm) {this.bitmap = ImageManager.loadSvEnemy(name, hue);return};
+    _alias_mog_Theatrhythm_loadBitmap.call(this,name, hue)
+};
+
+//=============================================================================
 // ** Sprite Actor
 //=============================================================================	
+
+//==============================
+// * updateTargetPosition
+//==============================
 var _alias_mog_Theatrhythm_updateTargetPosition = Sprite_Actor.prototype.updateTargetPosition;
 Sprite_Actor.prototype.updateTargetPosition = function() {
 	if ($gameSystem._theatrhythm) {return};
@@ -1784,7 +1795,9 @@ Sprite_Actor.prototype.updateTargetPosition = function() {
 //==============================
 var _alias_mog_Theatrhythm_setActorHome = Sprite_Actor.prototype.setActorHome;
 Sprite_Actor.prototype.setActorHome = function(index) {
-    if ($gameSystem._theatrhythm) {this.setHome(Moghunter.theatrhythm_actor_x, Moghunter.theatrhythm_actor_y + index * Moghunter.theatrhythm_actor_spc_y);return};
+    if ($gameSystem._theatrhythm) {
+		if (this._sprite_face) {this._sprite_face = null};
+		this.setHome(Moghunter.theatrhythm_actor_x, Moghunter.theatrhythm_actor_y + index * Moghunter.theatrhythm_actor_spc_y);return};
 	_alias_mog_Theatrhythm_setActorHome.call(this,index);
 };
 
@@ -1810,3 +1823,5 @@ Sprite_Actor.prototype.refreshMotion_Theatrhythm = function() {
          };
     };
 };
+
+
